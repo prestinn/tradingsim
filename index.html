@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trading Game - 2025 Edition</title>
+
+  <!-- Lightweight Charts -->
+  <script src="https://unpkg.com/lightweight-charts@3.0.0/dist/lightweight-charts.standalone.production.js"></script>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #f4f6f9; color: #2d2d2d; }
+    .glass { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); border-radius: 12px; padding: 1.5rem; }
+    .btn { background: linear-gradient(145deg, #ffffff, #e3e3e3); border-radius: 8px; padding: 10px 18px; font-weight: 600; }
+    .btn:hover { box-shadow: inset 4px 4px 8px #c5c5c5, inset -4px -4px 8px #ffffff; }
+    .btn-primary { background: linear-gradient(135deg, #5a67d8, #3b5998); color: white; }
+    .btn-danger { background: linear-gradient(135deg, #ff5252, #d33939); color: white; }
+  </style>
+
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header text-center p-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg">
+    <h1 class="text-3xl font-bold">🚀 Trading Game</h1>
+    <p class="text-lg">Make 5 Trades, Get Your Score!</p>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container mx-auto p-6 max-w-5xl">
+
+    <!-- Username & Highscores -->
+    <!-- ADDED: A small bar to show the current username, button to change username, and button to view highscores -->
+    <div class="glass p-4 mb-6 flex items-center justify-between">
+      <p id="usernameDisplay" class="text-lg font-bold text-blue-800">User: Guest</p>
+      <div class="flex gap-4">
+        <button id="changeUserBtn" class="btn">Change User</button>
+        <button id="viewScoresBtn" class="btn btn-primary">View Highscores</button>
+        <button id="restartBtn" class="btn btn-danger">Restart</button>
+      </div>
+    </div>
+    
+    <!-- Chart -->
+    <div id="chartDiv" class="w-full h-96 shadow-lg"></div>
+
+    <!-- Game Progress -->
+    <div class="glass flex items-center justify-between p-4 my-4">
+      <p class="text-lg font-semibold">Trades Left: <span id="tradesLeft" class="font-bold text-blue-500">5</span></p>
+      <div class="w-3/4 h-4 bg-gray-300 rounded-full">
+        <div id="progressFill" class="h-4 bg-blue-500 rounded-full w-full"></div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="glass p-6">
+      <h2 class="text-xl font-semibold mb-4">📊 Make a Trade</h2>
+      <div class="flex flex-wrap gap-4">
+        <input type="number" id="qtyInput" placeholder="Cash to risk (USD)" class="border p-3 rounded-lg w-40">
+        <button id="buyBtn" class="btn btn-primary">BUY / LONG</button>
+        <button id="sellBtn" class="btn btn-danger">SELL / SHORT</button>
+        <button id="closeBtn" class="btn">Close Position</button>
+
+        <!-- Leverage Input & Display -->
+        <input id="leverageInput" type="number" min="2" max="100" value="5" class="border p-3 rounded-lg w-20">
+        <p>Total Leveraged Position Size: <span id="totalLeveragedSizeDisplay">0</span></p>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="glass grid grid-cols-2 gap-4 p-6 mt-6">
+      <div>
+        <h2 class="text-xl font-semibold">📈 Current Trade</h2>
+        <p><strong>Unrealized PnL:</strong> <span id="unrealPnlDisplay">--</span></p>
+        <p><strong>Entry Price:</strong> <span id="entryPriceDisplay">--</span></p>
+        <p><strong>Current Price:</strong> <span id="currentPriceDisplay">--</span></p>
+        <p><strong>Liquidation Price:</strong> <span id="liquidationPriceDisplay">--</span></p>
+        <p><strong>Leverage:</strong> <span id="leverageDisplay">5x</span></p>
+        <p><strong>Margin Used:</strong> <span id="marginUsageDisplay">$0</span></p>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold">📈 Account Stats</h2>
+        <p><strong>Balance:</strong> <span id="balanceDisplay">$1000</span></p>
+        <p><strong>Win Rate:</strong> <span id="winRateDisplay">0%</span></p>
+        <p><strong>Profit Factor:</strong> <span id="profitFactorDisplay">--</span></p>
+        <p><strong>Largest Win:</strong> <span id="largestWinDisplay">--</span></p>
+        <p><strong>Largest Loss:</strong> <span id="largestLossDisplay">--</span></p>
+        <p><strong>Avg Win:</strong> <span id="avgWinDisplay">--</span></p>
+        <p><strong>Avg Loss:</strong> <span id="avgLossDisplay">--</span></p>
+      </div>
+
+      <div>
+        <h2 class="text-xl font-semibold">🔍 Performance</h2>
+        <p><strong>Max Drawdown:</strong> <span id="drawdownDisplay">$0</span></p>
+        <p><strong>Final Score:</strong> <span id="finalScoreDisplay">--</span></p>
+      </div>
+    </div>
+
+    <!-- Trade History -->
+    <div class="glass p-6 mt-6">
+      <h2 class="text-xl font-semibold">📜 Trade History</h2>
+      <table class="w-full border-collapse mt-2">
+        <thead>
+          <tr class="bg-gray-300">
+            <th class="p-2">Time</th>
+            <th class="p-2">Side</th>
+            <th class="p-2">Qty</th>
+            <th class="p-2">Price</th>
+            <th class="p-2">Fee</th>
+            <th class="p-2">Realized PnL</th>
+          </tr>
+        </thead>
+        <tbody id="tradeHistoryBody">
+          <!-- Trades added dynamically -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Game Over Message -->
+    <div id="gameOverScreen" class="glass p-6 text-center mt-6 hidden">
+      <h2 class="text-2xl font-bold">🎉 Game Over!</h2>
+      <p class="text-lg">Your Score: <span id="gameScore" class="font-bold text-blue-500">0%</span></p>
+      <button id="restartBtn" class="btn btn-primary mt-4">Restart Game</button>
+    </div>
+
+  </div>
+
+  <!-- JavaScript -->
+  <script src="script.js"></script>
+
+</body>
+</html>

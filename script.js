@@ -104,7 +104,7 @@ function init() {
   initLightweightChart();
 
   // 5) WebSocket Connection
-  socket = new WebSocket("ws://wesera.net:8765");
+  socket = new WebSocket("wss://wesera.net:8765");
   socket.onopen    = () => console.log("WebSocket connected!");
   socket.onmessage = (event) => handleServerMessage(event.data);
   socket.onclose   = () => console.log("WebSocket disconnected.");
